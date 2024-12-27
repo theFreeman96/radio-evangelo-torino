@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "1092690558609",
+    "firebase_url": "https://radio-evangelo-torino-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "radio-evangelo-torino",
+    "storage_bucket": "radio-evangelo-torino.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1092690558609:android:b037cdaaa75b4421be0930",
+        "android_client_info": {
+          "package_name": "com.davidebelvisi.radioevangelotorino"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1092690558609-5qi7ifiht6pme51csrk3r184eeval38j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhrLxIS3oEP5T5GAXySAeu1-JouWJ9jg0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1092690558609-5qi7ifiht6pme51csrk3r184eeval38j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
