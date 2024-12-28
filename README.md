@@ -1,16 +1,20 @@
-# radio_evangelo_torino
+# Radio Evangelo Torino
 
-La radio digitale della comunità evangelica A.D.I. - Torino, via Spalato 9/B - Collegata al circuito di Radio Evangelo Network
+La radio digitale della comunità evangelica A.D.I. - Torino, via Spalato 9/B - Collegata al circuito di Radio Evangelo Network.  
+Scaricala per ascoltare la radio e portarla sempre con te, e per ricevere i nostri aggiornamenti.
 
-## Getting Started
+![Logo](https://github.com/user-attachments/assets/af5efabb-0255-4492-82d6-c330702f5f9c)
 
-This project is a starting point for a Flutter application.
+## Screenshot
 
-A few resources to get you started if this is your first Flutter project:
+<div>
+  <img src="" alt="Presto..." width="15%">
+</div>
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Scarica
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+<a href="" target="_blank"><img src="https://user-images.githubusercontent.com/90036768/182561881-b812ae5b-dc18-4958-868a-460b585b032f.png" alt="Disponibile su Google Play Store" width="250px"></a>
+
+## Trattamento dati
+
+[Privacy Policy](privacy-policy.md)
