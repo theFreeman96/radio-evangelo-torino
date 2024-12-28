@@ -1,4 +1,4 @@
-package com.davidebelvisi.radioevangelotorino
+package com.radioevangelo.torino
 
 import io.flutter.embedding.android.FlutterActivity
 
