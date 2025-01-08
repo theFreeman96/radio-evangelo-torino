@@ -15,12 +15,22 @@ class NewsBody extends StatefulWidget {
 
 class NewsBodyState extends State<NewsBody> {
   late Stream<List<Map<String, dynamic>>> newsStream;
+  final FocusNode myFocusNode = FocusNode();
+
+  bool isNotFiltered = true;
+  String currentKeyword = '';
 
   @override
   void initState() {
     super.initState();
     _signInAndFetchNews();
     newsStream = _fetchNews();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    myFocusNode.dispose();
   }
 
   Future<void> _signInAndFetchNews() async {
@@ -48,6 +58,25 @@ class NewsBodyState extends State<NewsBody> {
         return data;
       }).toList();
     });
+  }
+
+  Stream<List<Map<String, dynamic>>> _searchNews(String keyword) async* {
+    final querySnapshot =
+        await FirebaseFirestore.instance.collection('avvisi').get();
+
+    final filteredResults = querySnapshot.docs.where((doc) {
+      final data = doc.data();
+      final titolo = (data['Titolo'] ?? '').toString().toLowerCase();
+      final descrizione = (data['Descrizione'] ?? '').toString().toLowerCase();
+      return titolo.contains(keyword.toLowerCase()) ||
+          descrizione.contains(keyword.toLowerCase());
+    }).map((doc) {
+      final data = doc.data();
+      data['ID'] = doc.id;
+      return data;
+    }).toList();
+
+    yield filteredResults;
   }
 
   String formatDate(String? date) {
@@ -90,31 +119,60 @@ class NewsBodyState extends State<NewsBody> {
     return '';
   }
 
+  void runFilter(String keyword) {
+    setState(() {
+      if (keyword.isEmpty) {
+        newsStream = _fetchNews();
+        isNotFiltered = true;
+      } else {
+        newsStream = _searchNews(keyword);
+        isNotFiltered = false;
+      }
+      currentKeyword = keyword;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: newsStream,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        } else if (snapshot.hasError) {
-          return Center(
-            child:
-                Text('Errore nel caricamento degli avvisi: ${snapshot.error}'),
-          );
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(
-            child: Text('Nessun avviso disponibile'),
-          );
-        }
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(kDefaultPadding),
+          child: TextField(
+            autofocus: false,
+            focusNode: myFocusNode,
+            onChanged: (value) {
+              runFilter(value);
+            },
+            decoration: InputDecoration(
+              hintText: 'Cerca per titolo o descrizione...',
+              prefixIcon: const Icon(Icons.search, color: kLightGrey),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.0),
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: StreamBuilder<List<Map<String, dynamic>>>(
+            stream: newsStream,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(
+                  child: Text(
+                    'Errore nel caricamento degli avvisi: ${snapshot.error}',
+                  ),
+                );
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Center(
+                  child: Text('Nessun avviso disponibile'),
+                );
+              }
 
-        final news = snapshot.data!;
-        return Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
+              final news = snapshot.data!;
+              return ListView.builder(
                 padding: const EdgeInsets.all(kDefaultPadding / 2),
                 itemCount: news.length,
                 itemBuilder: (context, index) {
@@ -124,6 +182,7 @@ class NewsBodyState extends State<NewsBody> {
                   final imageName = singleNews['Immagine'];
                   const media = '?alt=media';
                   final imageLink = storageLink + imageName + media;
+
                   return ListTile(
                     minTileHeight: 100,
                     leading: ClipRRect(
@@ -186,11 +245,11 @@ class NewsBodyState extends State<NewsBody> {
                     },
                   );
                 },
-              ),
-            ),
-          ],
-        );
-      },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

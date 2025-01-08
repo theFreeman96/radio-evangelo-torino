@@ -25,16 +25,21 @@ class RadioEvangeloTorino extends StatefulWidget {
 class RadioEvangeloTorinoState extends State<RadioEvangeloTorino> {
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => ThemeProvider(),
-      child: Consumer<ThemeProvider>(
-        builder: (context, ThemeProvider themeProvider, child) => MaterialApp(
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          themeMode:
-              themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-          debugShowCheckedModeBanner: false,
-          home: const Home(),
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: ChangeNotifierProvider(
+        create: (context) => ThemeProvider(),
+        child: Consumer<ThemeProvider>(
+          builder: (context, ThemeProvider themeProvider, child) => MaterialApp(
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            themeMode:
+                themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            debugShowCheckedModeBanner: false,
+            home: const Home(),
+          ),
         ),
       ),
     );
