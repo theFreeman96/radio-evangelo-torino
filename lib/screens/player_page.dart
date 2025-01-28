@@ -38,13 +38,13 @@ class _PlayerPageState extends State<PlayerPage> {
     super.initState();
     isPlaying = false;
     !isPlaying ? initRadioPlayer() : null;
-    VolumeController().listener((volume) {
+    VolumeController.instance.addListener((volume) {
       setState(() {
         _currentVolume = volume;
       });
     });
 
-    VolumeController().getVolume().then((volume) {
+    VolumeController.instance.getVolume().then((volume) {
       setState(() {
         _currentVolume = volume;
       });
@@ -74,7 +74,7 @@ class _PlayerPageState extends State<PlayerPage> {
   }
 
   Future<void> setVolume(double volume) async {
-    VolumeController().setVolume(volume);
+    VolumeController.instance.setVolume(volume);
     setState(() {
       _currentVolume = volume;
     });
