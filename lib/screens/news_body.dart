@@ -217,6 +217,7 @@ class NewsBodyState extends State<NewsBody> {
                     ),
                     trailing: const Icon(Icons.navigate_next),
                     onTap: () {
+                      myFocusNode.unfocus();
                       Navigator.push(
                         context,
                         MaterialPageRoute(
