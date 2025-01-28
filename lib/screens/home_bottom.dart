@@ -6,10 +6,10 @@ import '../utilities/theme_provider.dart';
 
 class HomeBottomBar extends StatelessWidget {
   const HomeBottomBar({
-    Key? key,
+    super.key,
     required this.currentIndex,
     required this.onTabTapped,
-  }) : super(key: key);
+  });
 
   final int currentIndex;
   final Function(int) onTabTapped;

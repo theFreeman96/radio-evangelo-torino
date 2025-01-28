@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:radio_evangelo_torino/screens/news_body.dart';
 
 class NewsPage extends StatelessWidget {
-  const NewsPage({Key? key}) : super(key: key);
+  const NewsPage({super.key});
 
   @override
   Widget build(BuildContext context) {

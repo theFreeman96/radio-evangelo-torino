@@ -5,7 +5,7 @@ import 'package:url_launcher/link.dart';
 import '../utilities/constants.dart';
 
 class InfoBody extends StatelessWidget {
-  const InfoBody({Key? key}) : super(key: key);
+  const InfoBody({super.key});
 
   @override
   Widget build(BuildContext context) {
