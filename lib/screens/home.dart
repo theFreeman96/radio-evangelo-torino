@@ -20,6 +20,7 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   int currentIndex = 0;
+
   void onTabTapped(int index) {
     setState(() {
       currentIndex = index;
@@ -35,6 +36,39 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
+    FirebaseMessaging.instance.requestPermission();
+    FirebaseMessaging.instance.getToken().then((token) {
+      print("Token del dispositivo: $token");
+    });
+    FirebaseMessaging.instance.subscribeToTopic('user');
+    print("Iscritto al topic: 'user'");
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print("Messaggio ricevuto: ${message.notification?.title}");
+      showLocalNotification(message.data);
+    });
+  }
+
+  Future<void> showLocalNotification(Map<String, dynamic> data) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'avvisi_radio_evangelo_torino',
+      'avvisi_radio_evangelo_torino',
+      channelDescription: 'avvisi_radio_evangelo_torino',
+      importance: Importance.max,
+      priority: Priority.high,
+      showWhen: false,
+    );
+
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await flutterLocalNotificationsPlugin.show(
+      0,
+      data['Title'],
+      data['Body'],
+      platformChannelSpecifics,
+      payload: data.toString(),
+    );
   }
 
   @override
