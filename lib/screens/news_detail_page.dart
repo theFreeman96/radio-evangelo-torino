@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:radio_evangelo_torino/utilities/constants.dart';
 
+import '../utilities/constants.dart';
 import '../utilities/theme_provider.dart';
 
 class NewsDetailPage extends StatelessWidget {

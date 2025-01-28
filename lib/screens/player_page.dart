@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
-import '/utilities/constants.dart';
 import 'package:radio_player/radio_player.dart';
-import 'package:volume_controller/volume_controller.dart';
-import 'package:url_launcher/link.dart';
 import 'package:sleek_circular_slider/sleek_circular_slider.dart';
+import 'package:url_launcher/link.dart';
+import 'package:volume_controller/volume_controller.dart';
 
+import '../utilities/constants.dart';
 import '../utilities/theme_provider.dart';
 
 class PlayerPage extends StatefulWidget {

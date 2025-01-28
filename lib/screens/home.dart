@@ -1,6 +1,9 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
 
+import '../main.dart';
 import '../utilities/constants.dart';
 import '../utilities/theme_provider.dart';
 import 'home_bottom.dart';
