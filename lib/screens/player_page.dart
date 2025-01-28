@@ -22,7 +22,7 @@ class _PlayerPageState extends State<PlayerPage> {
   final RadioPlayer _radioPlayer = RadioPlayer();
   bool isPlaying = false;
   List<String>? metadata;
-  static const radioURL = 'http://172.232.208.205';
+  static const radioURL = 'http://199.247.7.81';
   static const artURL =
       '$radioURL/api/station/radio_evangelo_torino/art/79e8aed5fa0bc332441f3649';
 
