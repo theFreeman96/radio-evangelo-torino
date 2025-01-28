@@ -227,8 +227,9 @@ class _PlayerPageState extends State<PlayerPage> {
 
   @override
   void dispose() {
-    super.dispose();
+    _radioPlayer.stop();
     _timer?.cancel();
+    super.dispose();
   }
 
   @override
