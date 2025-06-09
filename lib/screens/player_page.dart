@@ -19,25 +19,27 @@ class PlayerPage extends StatefulWidget {
 }
 
 class _PlayerPageState extends State<PlayerPage> {
-  final RadioPlayer _radioPlayer = RadioPlayer();
-  bool isPlaying = false;
-  List<String>? metadata;
-  static const radioURL = 'http://199.247.7.81';
-  static const artURL =
-      '$radioURL/api/station/radio_evangelo_torino/art/79e8aed5fa0bc332441f3649';
+  PlaybackState _playbackState = PlaybackState.paused;
+  Metadata? _metadata;
+
+  StreamSubscription? _playbackStateSubscription;
+  StreamSubscription? _metadataSubscription;
+
+  bool isStopped = false;
 
   double _currentVolume = 0.5;
 
   Timer? _timer;
-  double _selectedTime = 5.0;
+  double _selectedTime = 25.0;
   int _remainingSeconds = 0;
   bool _isRunning = false;
 
   @override
   void initState() {
     super.initState();
-    isPlaying = false;
-    !isPlaying ? initRadioPlayer() : null;
+    isStopped = false;
+    initRadioPlayer();
+
     VolumeController.instance.addListener((volume) {
       setState(() {
         _currentVolume = volume;
@@ -52,25 +54,24 @@ class _PlayerPageState extends State<PlayerPage> {
   }
 
   Future<void> initRadioPlayer() async {
-    await _radioPlayer.setChannel(
+    await RadioPlayer.setStation(
       title: 'Radio Evangelo Torino',
-      url: '$radioURL:8000/radio.mp3',
-      imagePath: artURL,
+      url: 'http://199.247.7.81:8000/radio.mp3',
+      logoAssetPath: 'lib/assets/logo.png',
     );
 
-    _radioPlayer.stateStream.listen((value) {
-      setState(() {
-        isPlaying = value;
-      });
+    _playbackStateSubscription =
+        RadioPlayer.playbackStateStream.listen((playbackState) {
+      _playbackState = playbackState;
+      setState(() {});
     });
 
-    _radioPlayer.metadataStream.listen((value) {
-      setState(() {
-        metadata = value;
-      });
+    _metadataSubscription = RadioPlayer.metadataStream.listen((metadata) {
+      _metadata = metadata;
+      setState(() {});
     });
 
-    await _radioPlayer.play();
+    isStopped ? null : await RadioPlayer.play();
   }
 
   Future<void> setVolume(double volume) async {
@@ -91,8 +92,9 @@ class _PlayerPageState extends State<PlayerPage> {
       if (!mounted) return;
       setState(() {
         if (_remainingSeconds > 0) {
-          _radioPlayer.play();
-          isPlaying = true;
+          RadioPlayer.play();
+          _playbackState = PlaybackState.playing;
+          isStopped = false;
           _remainingSeconds--;
         } else {
           timer.cancel();
@@ -105,10 +107,12 @@ class _PlayerPageState extends State<PlayerPage> {
   void endCircularTimer() {
     if (_timer != null) _timer!.cancel();
     setState(() {
-      _radioPlayer.stop();
-      isPlaying = false;
+      RadioPlayer.reset();
+      isStopped = true;
+      initRadioPlayer();
       _remainingSeconds = 0;
       _isRunning = false;
+      _selectedTime = 25.0;
     });
   }
 
@@ -120,114 +124,118 @@ class _PlayerPageState extends State<PlayerPage> {
             _isRunning ? _remainingSeconds : (_selectedTime * 60).toInt();
 
         return StatefulBuilder(
-            builder: (BuildContext context, StateSetter setState) {
-          _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-            if (!mounted) return;
-            if (_isRunning && remainingSeconds > 0) {
-              setState(() {
-                remainingSeconds--;
-              });
-            } else if (remainingSeconds <= 0) {
-              timer.cancel();
-            }
-          });
+          builder: (BuildContext context, StateSetter setState) {
+            _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+              if (!mounted) return;
+              if (_isRunning && remainingSeconds > 0) {
+                setState(() {
+                  remainingSeconds--;
+                });
+              } else if (remainingSeconds <= 0) {
+                timer.cancel();
+              }
+            });
 
-          return AlertDialog(
-            title: const Text('Timer riproduzione'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  const Text(
-                    'Puoi impostare un timer per interrompere automaticamente '
-                    'la riproduzione. Usa lo slider per scegliere il tempo desiderato.',
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: kDefaultPadding),
-                    child: SleekCircularSlider(
-                      min: 0,
-                      max: 60,
-                      initialValue:
-                          _isRunning ? (_remainingSeconds / 60) : _selectedTime,
-                      appearance: CircularSliderAppearance(
-                        customWidths: CustomSliderWidths(
-                          progressBarWidth: 8,
-                          trackWidth: 4,
-                          handlerSize: 10,
-                        ),
-                        size: 150,
-                        customColors: CustomSliderColors(
-                          progressBarColor:
-                              Theme.of(context).sliderTheme.activeTrackColor,
-                          trackColor:
-                              Theme.of(context).sliderTheme.inactiveTrackColor,
-                          dotColor: Theme.of(context).sliderTheme.thumbColor,
-                        ),
-                        infoProperties: InfoProperties(
-                          mainLabelStyle: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          modifier: (double value) {
-                            var varRun = _isRunning
-                                ? _remainingSeconds
-                                : value.round() * 60;
-                            int hours = varRun ~/ 3600;
-                            int minutes = (varRun % 3600) ~/ 60;
-                            int seconds = varRun % 60;
-
-                            return '${hours.toString().padLeft(2, '0')}:'
-                                '${minutes.toString().padLeft(2, '0')}:'
-                                '${seconds.toString().padLeft(2, '0')}';
-                          },
-                        ),
-                      ),
-                      onChange: (double value) {
-                        setState(() {
-                          _selectedTime = value;
-                          if (_isRunning) {
-                            endCircularTimer();
-                            startCircularTimer(_selectedTime.toInt());
-                          }
-                        });
-                      },
+            return AlertDialog(
+              title: const Text('Timer riproduzione'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    const Text(
+                      'Puoi impostare un timer per interrompere automaticamente '
+                      'la riproduzione. Usa lo slider per scegliere il tempo desiderato.',
                     ),
-                  ),
-                ],
+                    Padding(
+                      padding: const EdgeInsets.only(top: kDefaultPadding),
+                      child: SleekCircularSlider(
+                        min: 0,
+                        max: 300,
+                        initialValue: _isRunning
+                            ? (_remainingSeconds / 60)
+                            : _selectedTime,
+                        appearance: CircularSliderAppearance(
+                          customWidths: CustomSliderWidths(
+                            progressBarWidth: 8,
+                            trackWidth: 4,
+                            handlerSize: 10,
+                          ),
+                          size: 150,
+                          customColors: CustomSliderColors(
+                            progressBarColor:
+                                Theme.of(context).sliderTheme.activeTrackColor,
+                            trackColor: Theme.of(context)
+                                .sliderTheme
+                                .inactiveTrackColor,
+                            dotColor: Theme.of(context).sliderTheme.thumbColor,
+                          ),
+                          infoProperties: InfoProperties(
+                            mainLabelStyle: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            modifier: (double value) {
+                              var varRun = _isRunning
+                                  ? _remainingSeconds
+                                  : value.round() * 60;
+                              int hours = varRun ~/ 3600;
+                              int minutes = (varRun % 3600) ~/ 60;
+                              int seconds = varRun % 60;
+
+                              return '${hours.toString().padLeft(2, '0')}:'
+                                  '${minutes.toString().padLeft(2, '0')}:'
+                                  '${seconds.toString().padLeft(2, '0')}';
+                            },
+                          ),
+                        ),
+                        onChange: (double value) {
+                          setState(() {
+                            _selectedTime = value;
+                            if (_isRunning) {
+                              endCircularTimer();
+                              startCircularTimer(_selectedTime.toInt());
+                            }
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            actionsAlignment: MainAxisAlignment.spaceAround,
-            actions: <Widget>[
-              OutlinedButton(
-                child: const Text('Chiudi'),
-                onPressed: () {
-                  _timer?.cancel();
-                  Navigator.of(context).pop();
-                },
-              ),
-              FilledButton.icon(
-                icon: Icon(_isRunning ? Icons.stop : Icons.nights_stay),
-                label: Text(_isRunning ? 'Ferma' : 'Avvia'),
-                onPressed: () {
-                  if (_isRunning) {
-                    endCircularTimer();
-                  } else {
-                    startCircularTimer(_selectedTime.toInt());
-                  }
-                  _timer?.cancel();
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          );
-        });
+              actionsAlignment: MainAxisAlignment.spaceAround,
+              actions: <Widget>[
+                OutlinedButton(
+                  child: const Text('Chiudi'),
+                  onPressed: () {
+                    _timer?.cancel();
+                    Navigator.of(context).pop();
+                  },
+                ),
+                FilledButton.icon(
+                  icon: Icon(_isRunning ? Icons.stop : Icons.nights_stay),
+                  label: Text(_isRunning ? 'Ferma' : 'Avvia'),
+                  onPressed: () {
+                    if (_isRunning) {
+                      endCircularTimer();
+                    } else {
+                      startCircularTimer(_selectedTime.toInt());
+                    }
+                    _timer?.cancel();
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
       },
     );
   }
 
   @override
   void dispose() {
-    _radioPlayer.stop();
+    _playbackStateSubscription?.cancel();
+    _metadataSubscription?.cancel();
     _timer?.cancel();
     super.dispose();
   }
@@ -277,42 +285,34 @@ class _PlayerPageState extends State<PlayerPage> {
   Widget buildArt() {
     final mediaQuery = MediaQuery.of(context);
     Orientation orientation = mediaQuery.orientation;
-    return FutureBuilder(
-      future: _radioPlayer.getArtworkImage(),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        Image artwork;
-        if (snapshot.hasData) {
-          artwork = snapshot.data;
-        } else {
-          artwork = Image.asset(
-            'lib/assets/logo.png',
-            fit: orientation == Orientation.portrait
-                ? BoxFit.fitHeight
-                : BoxFit.fitWidth,
-          );
-        }
-        return Padding(
-          padding: const EdgeInsets.only(top: kDefaultPadding),
-          child: Container(
-            height: mediaQuery.size.height * 0.20,
-            decoration: BoxDecoration(
-              color: kPrimaryColor,
-              borderRadius: BorderRadius.circular(30.0),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 4,
-                  offset: Offset(4, 6),
-                ),
-              ],
+
+    Image artwork = Image.asset(
+      'lib/assets/logo.png',
+      fit: orientation == Orientation.portrait
+          ? BoxFit.fitHeight
+          : BoxFit.fitWidth,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(top: kDefaultPadding),
+      child: Container(
+        height: mediaQuery.size.height * 0.20,
+        decoration: BoxDecoration(
+          color: kPrimaryColor,
+          borderRadius: BorderRadius.circular(30.0),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 4,
+              offset: Offset(4, 6),
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(30.0),
-              child: artwork,
-            ),
-          ),
-        );
-      },
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(30.0),
+          child: artwork,
+        ),
+      ),
     );
   }
 
@@ -327,7 +327,7 @@ class _PlayerPageState extends State<PlayerPage> {
         children: <Widget>[
           Text(
             textAlign: TextAlign.center,
-            metadata?[1] ?? '',
+            _metadata?.title ?? '',
             softWrap: true,
             overflow: TextOverflow.ellipsis,
             maxLines: 2,
@@ -338,7 +338,7 @@ class _PlayerPageState extends State<PlayerPage> {
           ),
           Text(
             textAlign: TextAlign.center,
-            metadata?[0] ?? '',
+            _metadata?.artist ?? '',
             softWrap: true,
             overflow: TextOverflow.ellipsis,
             maxLines: 2,
@@ -388,16 +388,29 @@ class _PlayerPageState extends State<PlayerPage> {
             icon: const Icon(Icons.stop),
             iconSize: 32.0,
             onPressed: () {
-              _radioPlayer.stop();
+              RadioPlayer.reset();
+              isStopped = true;
+              _remainingSeconds = 0;
+              _isRunning = false;
+              _selectedTime = 25.0;
+              initRadioPlayer();
             },
           ),
           IconButton.filled(
             icon: Icon(
-              isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+              _playbackState == PlaybackState.playing
+                  ? Icons.pause_rounded
+                  : Icons.play_arrow_rounded,
             ),
             iconSize: 64.0,
             onPressed: () {
-              isPlaying ? _radioPlayer.pause() : _radioPlayer.play();
+              _playbackState == PlaybackState.playing
+                  ? RadioPlayer.pause()
+                  : RadioPlayer.play();
+              isStopped = false;
+              _remainingSeconds = 0;
+              _isRunning = false;
+              _selectedTime = 25.0;
             },
           ),
           IconButton.filled(
@@ -412,7 +425,7 @@ class _PlayerPageState extends State<PlayerPage> {
     );
   }
 
-  buildEngage() {
+  Widget buildEngage() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     return Padding(
       padding: const EdgeInsets.all(kDefaultPadding),

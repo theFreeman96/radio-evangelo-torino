@@ -1,4 +1,5 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
@@ -36,16 +37,50 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
-    FirebaseMessaging.instance.requestPermission();
-    FirebaseMessaging.instance.getToken().then((token) {
-      print("Token del dispositivo: $token");
-    });
-    FirebaseMessaging.instance.subscribeToTopic('user');
-    print("Iscritto al topic: 'user'");
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print("Messaggio ricevuto: ${message.notification?.title}");
-      showLocalNotification(message.data);
-    });
+    _initFirebaseMessaging();
+  }
+
+  Future<void> _initFirebaseMessaging() async {
+    NotificationSettings settings =
+        await FirebaseMessaging.instance.requestPermission();
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+        settings.authorizationStatus == AuthorizationStatus.provisional ||
+        defaultTargetPlatform == TargetPlatform.android) {
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        String? apnsToken;
+        int retryCount = 0;
+        while (apnsToken == null && retryCount < 5) {
+          apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+          if (apnsToken == null) {
+            await Future.delayed(Duration(seconds: 2));
+            retryCount++;
+          }
+        }
+        if (apnsToken == null) {
+          print(
+              "Attenzione: APNS token non disponibile dopo diversi tentativi.");
+        } else {
+          print("APNS token ricevuto: $apnsToken");
+        }
+      }
+
+      String? fcmToken = await FirebaseMessaging.instance.getToken();
+      if (fcmToken != null) {
+        print("Token del dispositivo: $fcmToken");
+        await FirebaseMessaging.instance.subscribeToTopic('user');
+        print("Iscritto al topic: 'user'");
+      } else {
+        print("Token FCM non disponibile.");
+      }
+
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        print("Messaggio ricevuto: ${message.notification?.title}");
+        showLocalNotification(message.data);
+      });
+    } else {
+      print("Permessi notifiche non concessi.");
+    }
   }
 
   Future<void> showLocalNotification(Map<String, dynamic> data) async {
