@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
@@ -40,6 +41,37 @@ class _PlayerPageState extends State<PlayerPage> {
     isStopped = false;
     initRadioPlayer();
 
+    AudioSession.instance.then((session) {
+      session.interruptionEventStream.listen((event) {
+        if (event.begin) {
+          switch (event.type) {
+            case AudioInterruptionType.pause:
+            case AudioInterruptionType.unknown:
+              RadioPlayer.pause();
+              break;
+            case AudioInterruptionType.duck:
+              VolumeController.instance.setVolume(_currentVolume * 0.3);
+              break;
+          }
+        } else {
+          switch (event.type) {
+            case AudioInterruptionType.pause:
+              RadioPlayer.play();
+              break;
+            case AudioInterruptionType.duck:
+              VolumeController.instance.setVolume(_currentVolume);
+              break;
+            case AudioInterruptionType.unknown:
+              break;
+          }
+        }
+      });
+
+      session.becomingNoisyEventStream.listen((_) {
+        RadioPlayer.pause();
+      });
+    });
+
     VolumeController.instance.addListener((volume) {
       setState(() {
         _currentVolume = volume;
@@ -60,15 +92,26 @@ class _PlayerPageState extends State<PlayerPage> {
       logoAssetPath: 'lib/assets/logo.png',
     );
 
+    final session = await AudioSession.instance;
+    await session.configure(const AudioSessionConfiguration.speech());
+
+    bool success = await session.setActive(true);
+    if (!success) {
+      debugPrint('AudioSession non attivata. Interrompo.');
+      return;
+    }
+
     _playbackStateSubscription =
         RadioPlayer.playbackStateStream.listen((playbackState) {
-      _playbackState = playbackState;
-      setState(() {});
+      setState(() {
+        _playbackState = playbackState;
+      });
     });
 
     _metadataSubscription = RadioPlayer.metadataStream.listen((metadata) {
-      _metadata = metadata;
-      setState(() {});
+      setState(() {
+        _metadata = metadata;
+      });
     });
 
     isStopped ? null : await RadioPlayer.play();
