@@ -245,38 +245,48 @@ class _PlayerPageState extends State<PlayerPage> {
     final mediaQuery = MediaQuery.of(context);
     Orientation orientation = mediaQuery.orientation;
     return orientation == Orientation.portrait
-        ? SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                buildArt(),
-                buildInfo(),
-                buildVolumeSlider(),
-                buildButtons(),
-                buildEngage(),
-              ],
-            ),
-          )
-        : Row(
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(left: kDefaultPadding * 2),
-                child: SizedBox(
-                  height: mediaQuery.size.height * 0.5,
-                  child: buildArt(),
+        ? Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    buildArt(),
+                    buildInfo(),
+                    buildVolumeSlider(),
+                    buildButtons(),
+                    buildEngage(),
+                  ],
                 ),
               ),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: <Widget>[
-                      buildInfo(),
-                      buildVolumeSlider(),
-                      buildButtons(),
-                      buildEngage()
-                    ],
+            ],
+          )
+        : Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.only(left: kDefaultPadding * 2),
+                    child: SizedBox(
+                      height: mediaQuery.size.height * 0.5,
+                      child: buildArt(),
+                    ),
                   ),
-                ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: <Widget>[
+                          buildInfo(),
+                          buildVolumeSlider(),
+                          buildButtons(),
+                          buildEngage()
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           );
